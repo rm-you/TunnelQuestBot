@@ -4,28 +4,41 @@ const client = require('./client.js');
 
 //stream log file(s)
 
-tail = new Tail ("C:\\Program Files (x86)\\Sony\\EverQuest\\Logs\\eqlog_Auclog_P1999Green.txt")
+greenTail = new Tail ("C:\Users\jerk\Desktop\P99\P99\Logs\eqlog_Airdiael_P1999Green.txt")
+blueTail = new Tail ("C:\Users\jerk\Desktop\P99\P99\Logs\eqlog_yourBlueCharNameHere.txt")
 
 var outgoing = [];
 
-tail.on("line", function(data) {
+greenTail.on("line", function(data) {
     parseLog(data, 'GREEN');
 })
 
-tail.on("error", function(error) {
-    console.log('ERROR: ', error)
+greenTail.on("error", function(error) {
+    console.log('GREEN TAIL ERROR: ', error)
+})
+
+blueTail.on("line", function(data) {
+    parseLog(data, 'BLUE');
+})
+
+blueTail.on("error", function(error) {
+    console.log('ERROR TAIL ERROR: ', error)
 })
 
 
 let pullInterval = 1 * (1000 * 60)
 
-let itemList = [];
+let greenItemList = [];
+let blueItemList = [];
 
 setInterval(() => {
     db.upkeep();
-    db.getWatches((results) => {
-        itemList = results;
-    })
+    db.getWatches('GREEN', (results) => {
+        greenItemList = results;
+    });
+    db.getWatches('BLUE', (results) => {
+        blueItemList = results;
+    });
 }, pullInterval)
 
 //remove any WTB sections from seller message
@@ -58,32 +71,55 @@ function parseLog(text, logServer) {
     var words = auction.split(' ');
     //test if is auction
     if (words[1] === 'AUCTIONS,') {
-        client.streamAuction(text.replace(/[|]+/g, '|'), "GREEN");
+        client.streamAuction(text.replace(/[|]+/g, '|'), logServer);
         //trim single quotes
         words[2] = words[2].slice(1);
         words = filterWTS(words);
         auction = words.join(' ');
         if (words.length > 2) {
-            itemList.forEach(({item_name, user_id, user_name, price, server}) => {
-                if (server === logServer && auction.includes(item_name)) {
-                        // console.log('match found: ', item_name, user_id, user_name,  price, server);
-                        let filteredAuction = auction.slice(auction.indexOf(item_name), auction.length);
-                        let logPrice = parsePrice(filteredAuction, item_name.length);
-                        if (price === -1 && logPrice === null) {
-                            // console.log("match found - no price requirement", logPrice, price)
-                            var seller = words[0];
-                            let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
-                            outgoing.push(msg)
-                        }
-                        else if (logPrice && logPrice <= price || price === -1) {
-                            // console.log("Meets price criteria", logPrice, price)
-                            var seller = words[0];
-                            let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
-                            outgoing.push(msg)
+            if (logServer === 'GREEN') {
+                greenItemList.forEach(({item_name, user_id, user_name, price, server}) => {
+                    if (auction.includes(item_name)) {
+                            // console.log('match found: ', item_name, user_id, user_name,  price, server);
+                            let filteredAuction = auction.slice(auction.indexOf(item_name), auction.length);
+                            let logPrice = parsePrice(filteredAuction, item_name.length);
+                            if (price === -1 && logPrice === null) {
+                                // console.log("match found - no price requirement", logPrice, price)
+                                var seller = words[0];
+                                let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
+                                outgoing.push(msg)
+                            }
+                            else if (logPrice && logPrice <= price || price === -1) {
+                                // console.log("Meets price criteria", logPrice, price)
+                                var seller = words[0];
+                                let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
+                                outgoing.push(msg)
+                            }
                         }
                     }
-                }
-            ) 
+                ) 
+            } else if (logServer === "BLUE") {
+                blueItemList.forEach(({item_name, user_id, user_name, price, server}) => {
+                    if (auction.includes(item_name)) {
+                            // console.log('match found: ', item_name, user_id, user_name,  price, server);
+                            let filteredAuction = auction.slice(auction.indexOf(item_name), auction.length);
+                            let logPrice = parsePrice(filteredAuction, item_name.length);
+                            if (price === -1 && logPrice === null) {
+                                // console.log("match found - no price requirement", logPrice, price)
+                                var seller = words[0];
+                                let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
+                                outgoing.push(msg)
+                            }
+                            else if (logPrice && logPrice <= price || price === -1) {
+                                // console.log("Meets price criteria", logPrice, price)
+                                var seller = words[0];
+                                let msg = {userId: user_id, userName: user_name, itemName: item_name, sellingPrice: logPrice, seller: seller, server: server, fullAuction: text}
+                                outgoing.push(msg)
+                            }
+                        }
+                    }
+                ) 
+            }
         }
     }
     sendMsgs();

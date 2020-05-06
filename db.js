@@ -80,9 +80,9 @@ const findOrAddItem = function(item) {
 
 
 //TODO: this function should not return duplicate items, just the item once with lowest price
-const getWatches = function(callback) {
-    let query = "SELECT items.name AS item_name, user_id, users.name AS user_name, price, server FROM items INNER JOIN watches ON watches.item_id = items.id INNER JOIN users ON watches.user_id = users.id;";
-    connection.query(query)
+const getWatches = function(server, callback) {
+    let query = `SELECT items.name AS item_name, user_id, users.name AS user_name, price, server FROM items INNER JOIN watches ON watches.item_id = items.id INNER JOIN users ON watches.user_id = users.id WHERE server = $1;`;
+    connection.query(query, [server])
     .then((res) => {
         callback(res.rows)
     })

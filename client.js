@@ -60,9 +60,9 @@ bot.on('message', function (message) {
                     args[1] = -1;
                     db.addWatch(message.author.id, args[0], args[1], args[2]);
                 }
-                else if (args[2] !== undefined && args[2] !== undefined && args[2].toUpperCase() === 'BLUE') {
-                    message.author.send(`Sorry, due to IP Restrictions TunnelQuest is currently only watching P1999 Green Server.`)
-                }  
+                // else if (args !== undefined && args[2] !== undefined && args[2].toUpperCase() === 'BLUE') {
+                //     message.author.send(`Sorry, due to IP Restrictions TunnelQuest is currently only watching P1999 Green Server.`)
+                // }  
                 else if (args[2] !== undefined && args[2].toUpperCase() !== 'GREEN') {
                     message.author.send(`Sorry, I don't recognize the server name ${args[2]}.  Please try "green" or "blue"`);
                 } else {
@@ -162,6 +162,8 @@ function streamAuction (msg, server) {
 
     if (server === "GREEN") {
         channelID = "672512233435168784";
+    } else if (server === "BLUE") {
+        channelID = '' //TODO: insert blue channel id here
     }
     // console.log(msg, server, channelID);
 
